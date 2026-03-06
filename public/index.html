@@ -104,15 +104,6 @@
     <div>Vormel 2026</div>
 </footer>
 
-<script>
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry, i) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => entry.target.classList.add('visible'), 60 * i);
-            }
-        });
-    }, { threshold: 0.05 });
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-</script>
+<script src="script.js"></script>
 </body>
 </html>
