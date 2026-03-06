@@ -2,11 +2,464 @@
 <html lang="et">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vormel 2026</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #e8001d;
+            --dark: #0a0a0a;
+            --darker: #050505;
+            --mid: #111111;
+            --light: #1e1e1e;
+            --white: #f0f0f0;
+            --grey: #888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--darker);
+            color: var(--white);
+            font-family: 'Barlow', sans-serif;
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
+        }
+
+        .logo {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 1.8em;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .logo span { color: var(--red); }
+
+        nav ul { list-style: none; display: flex; gap: 40px; }
+
+        nav ul a {
+            color: var(--grey);
+            text-decoration: none;
+            font-size: 0.85em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        nav ul a:hover { color: var(--white); }
+
+        .hero {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(105deg, rgba(232,0,29,0.15) 0%, transparent 50%),
+                linear-gradient(to bottom, transparent 50%, var(--darker) 100%),
+                repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(255,255,255,0.015) 80px, rgba(255,255,255,0.015) 81px),
+                repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(255,255,255,0.015) 80px, rgba(255,255,255,0.015) 81px);
+        }
+
+        .hero-number {
+            position: absolute;
+            right: -20px; top: 50%;
+            transform: translateY(-50%);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: clamp(200px, 35vw, 500px);
+            color: rgba(232,0,29,0.06);
+            letter-spacing: -20px;
+            user-select: none;
+        }
+
+        .hero-content { position: relative; padding: 0 60px; max-width: 800px; }
+
+        .hero-tag {
+            display: inline-block;
+            background: var(--red);
+            color: white;
+            font-size: 0.7em;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            margin-bottom: 30px;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .hero h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: clamp(60px, 10vw, 130px);
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            animation: fadeUp 0.8s 0.1s ease both;
+        }
+
+        .hero h1 .line2 { color: var(--red); display: block; }
+
+        .hero p {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: var(--grey);
+            max-width: 450px;
+            line-height: 1.7;
+            animation: fadeUp 0.8s 0.2s ease both;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 50px;
+            margin-top: 50px;
+            animation: fadeUp 0.8s 0.3s ease both;
+        }
+
+        .stat-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 2.5em;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--grey);
+            margin-top: 4px;
+        }
+
+        .scroll-line {
+            position: absolute;
+            bottom: 40px; left: 60px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.7em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--grey);
+        }
+
+        .scroll-line::before {
+            content: '';
+            display: block;
+            width: 40px; height: 1px;
+            background: var(--red);
+        }
+
+        section { padding: 100px 60px; }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .section-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 1em;
+            color: var(--red);
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: clamp(2em, 5vw, 4em);
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .section-line {
+            flex: 1; height: 1px;
+            background: var(--light);
+            margin-left: 20px;
+        }
+
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 2px;
+        }
+
+        .driver-card {
+            background: var(--mid);
+            padding: 30px 28px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .driver-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: var(--red);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.3s;
+        }
+
+        .driver-card:hover { background: var(--light); }
+        .driver-card:hover::before { transform: scaleY(1); }
+
+        .driver-num {
+            position: absolute;
+            top: 10px; right: 16px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 3.5em;
+            color: rgba(255,255,255,0.05);
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .driver-card:hover .driver-num { color: rgba(232,0,29,0.15); }
+
+        .driver-team {
+            font-size: 0.65em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 8px;
+        }
+
+        .driver-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 1.6em;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .driver-country {
+            margin-top: 12px;
+            font-size: 0.78em;
+            color: var(--grey);
+        }
+
+        .calendar-list { display: flex; flex-direction: column; gap: 2px; }
+
+        .race-row {
+            display: grid;
+            grid-template-columns: 70px 1fr 200px 130px;
+            align-items: center;
+            padding: 20px 28px;
+            background: var(--mid);
+            transition: background 0.2s;
+        }
+
+        .race-row:hover { background: var(--light); }
+        .race-row.current { background: var(--light); border-left: 3px solid var(--red); }
+        .race-row.done { opacity: 0.45; }
+
+        .race-round {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            color: var(--grey);
+        }
+
+        .race-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .race-sprint {
+            font-size: 0.58em;
+            background: #c45200;
+            color: white;
+            padding: 2px 6px;
+            letter-spacing: 1px;
+            margin-left: 8px;
+            vertical-align: middle;
+            font-weight: 600;
+        }
+
+        .race-location { font-size: 0.78em; color: var(--grey); margin-top: 2px; }
+        .race-date { font-size: 0.8em; color: var(--grey); }
+        .race-status { text-align: right; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 0.62em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .badge-next { background: var(--red); color: white; }
+        .badge-done { color: var(--grey); border: 1px solid #2a2a2a; }
+        .badge-coming { color: #444; }
+
+        footer {
+            padding: 40px 60px;
+            border-top: 1px solid var(--light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--grey);
+            font-size: 0.8em;
+            letter-spacing: 1px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 24px; }
+            nav ul { display: none; }
+            section { padding: 60px 24px; }
+            .hero-content { padding: 0 24px; }
+            .race-row { grid-template-columns: 50px 1fr 90px; }
+            .race-status { display: none; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Vormel 2026 🏎️</h1>
-    <p>Tere tulemast!</p>
+
+<nav>
+    <div class="logo">F<span>1</span> 2026</div>
+    <ul>
+        <li><a href="#drivers">Sõitjad</a></li>
+        <li><a href="#calendar">Kalender</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-number">26</div>
+    <div class="hero-content">
+        <div class="hero-tag">Hooaeg 2026</div>
+        <h1>Vormel<span class="line2">Üks</span></h1>
+        <p>Uus ajastu. Uued reeglid, uued mootorid, kaks uut tiimi. 24 etappi, 11 tiimi, 22 sõitjat.</p>
+        <div class="hero-stats">
+            <div><div class="stat-num">24</div><div class="stat-label">Etappi</div></div>
+            <div><div class="stat-num">11</div><div class="stat-label">Tiimi</div></div>
+            <div><div class="stat-num">22</div><div class="stat-label">Sõitjat</div></div>
+        </div>
+    </div>
+    <div class="scroll-line">Keri alla</div>
+</section>
+
+<!-- DRIVERS -->
+<section id="drivers">
+    <div class="section-header fade-in">
+        <span class="section-num">01</span>
+        <h2 class="section-title">Sõitjad</h2>
+        <div class="section-line"></div>
+    </div>
+    <div class="drivers-grid">
+        <div class="driver-card fade-in"><div class="driver-num">4</div><div class="driver-team">McLaren · Mercedes</div><div class="driver-name">Lando<br>Norris</div><div class="driver-country">🇬🇧 Suurbritannia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">81</div><div class="driver-team">McLaren · Mercedes</div><div class="driver-name">Oscar<br>Piastri</div><div class="driver-country">🇦🇺 Austraalia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">63</div><div class="driver-team">Mercedes</div><div class="driver-name">George<br>Russell</div><div class="driver-country">🇬🇧 Suurbritannia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">12</div><div class="driver-team">Mercedes</div><div class="driver-name">Kimi<br>Antonelli</div><div class="driver-country">🇮🇹 Itaalia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">1</div><div class="driver-team">Red Bull · Ford</div><div class="driver-name">Max<br>Verstappen</div><div class="driver-country">🇳🇱 Holland</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">6</div><div class="driver-team">Red Bull · Ford</div><div class="driver-name">Isack<br>Hadjar</div><div class="driver-country">🇫🇷 Prantsusmaa</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">16</div><div class="driver-team">Ferrari</div><div class="driver-name">Charles<br>Leclerc</div><div class="driver-country">🇲🇨 Monaco</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">44</div><div class="driver-team">Ferrari</div><div class="driver-name">Lewis<br>Hamilton</div><div class="driver-country">🇬🇧 Suurbritannia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">55</div><div class="driver-team">Williams · Mercedes</div><div class="driver-name">Carlos<br>Sainz</div><div class="driver-country">🇪🇸 Hispaania</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">23</div><div class="driver-team">Williams · Mercedes</div><div class="driver-name">Alex<br>Albon</div><div class="driver-country">🇹🇭 Tai</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">30</div><div class="driver-team">Racing Bulls · Ford</div><div class="driver-name">Liam<br>Lawson</div><div class="driver-country">🇳🇿 Uus-Meremaa</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">5</div><div class="driver-team">Racing Bulls · Ford</div><div class="driver-name">Arvid<br>Lindblad</div><div class="driver-country">🇬🇧 Suurbritannia · Rookie</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">14</div><div class="driver-team">Aston Martin · Honda</div><div class="driver-name">Fernando<br>Alonso</div><div class="driver-country">🇪🇸 Hispaania</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">18</div><div class="driver-team">Aston Martin · Honda</div><div class="driver-name">Lance<br>Stroll</div><div class="driver-country">🇨🇦 Kanada</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">31</div><div class="driver-team">Haas · Ferrari</div><div class="driver-name">Esteban<br>Ocon</div><div class="driver-country">🇫🇷 Prantsusmaa</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">87</div><div class="driver-team">Haas · Ferrari</div><div class="driver-name">Oliver<br>Bearman</div><div class="driver-country">🇬🇧 Suurbritannia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">27</div><div class="driver-team">Audi</div><div class="driver-name">Nico<br>Hülkenberg</div><div class="driver-country">🇩🇪 Saksamaa</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">5</div><div class="driver-team">Audi</div><div class="driver-name">Gabriel<br>Bortoleto</div><div class="driver-country">🇧🇷 Brasiilia</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">10</div><div class="driver-team">Alpine · Mercedes</div><div class="driver-name">Pierre<br>Gasly</div><div class="driver-country">🇫🇷 Prantsusmaa</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">43</div><div class="driver-team">Alpine · Mercedes</div><div class="driver-name">Franco<br>Colapinto</div><div class="driver-country">🇦🇷 Argentina</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">11</div><div class="driver-team">Cadillac · Ferrari</div><div class="driver-name">Sergio<br>Pérez</div><div class="driver-country">🇲🇽 Mehhiko</div></div>
+        <div class="driver-card fade-in"><div class="driver-num">77</div><div class="driver-team">Cadillac · Ferrari</div><div class="driver-name">Valtteri<br>Bottas</div><div class="driver-country">🇫🇮 Soome</div></div>
+    </div>
+</section>
+
+<!-- CALENDAR -->
+<section id="calendar">
+    <div class="section-header fade-in">
+        <span class="section-num">02</span>
+        <h2 class="section-title">Võistluskalender</h2>
+        <div class="section-line"></div>
+    </div>
+    <div class="calendar-list">
+        <div class="race-row done fade-in"><div class="race-round">R01</div><div><div class="race-name">Austraalia GP</div><div class="race-location">Melbourne — Albert Park</div></div><div class="race-date">6–8. märts</div><div class="race-status"><span class="badge badge-done">Lõppenud</span></div></div>
+        <div class="race-row current fade-in"><div class="race-round">R02</div><div><div class="race-name">Hiina GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Shanghai</div></div><div class="race-date">13–15. märts</div><div class="race-status"><span class="badge badge-next">Järgmine</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R03</div><div><div class="race-name">Jaapani GP</div><div class="race-location">Suzuka</div></div><div class="race-date">27–29. märts</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R04</div><div><div class="race-name">Bahreini GP</div><div class="race-location">Sakhir</div></div><div class="race-date">10–12. aprill</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R05</div><div><div class="race-name">Saudi Araabia GP</div><div class="race-location">Jeddah</div></div><div class="race-date">17–19. aprill</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R06</div><div><div class="race-name">Miami GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Miami</div></div><div class="race-date">1–3. mai</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R07</div><div><div class="race-name">Kanada GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Montréal</div></div><div class="race-date">22–24. mai</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R08</div><div><div class="race-name">Monaco GP</div><div class="race-location">Monte Carlo</div></div><div class="race-date">5–7. juuni</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R09</div><div><div class="race-name">Barcelona-Catalunya GP</div><div class="race-location">Barcelona</div></div><div class="race-date">12–14. juuni</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R10</div><div><div class="race-name">Austria GP</div><div class="race-location">Spielberg — Red Bull Ring</div></div><div class="race-date">26–28. juuni</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R11</div><div><div class="race-name">Briti GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Silverstone</div></div><div class="race-date">3–5. juuli</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R12</div><div><div class="race-name">Belgia GP</div><div class="race-location">Spa-Francorchamps</div></div><div class="race-date">17–19. juuli</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R13</div><div><div class="race-name">Ungari GP</div><div class="race-location">Budapest — Hungaroring</div></div><div class="race-date">25–27. juuli</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R14</div><div><div class="race-name">Hollandi GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Zandvoort</div></div><div class="race-date">21–23. august</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R15</div><div><div class="race-name">Itaalia GP</div><div class="race-location">Monza</div></div><div class="race-date">4–6. september</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R16</div><div><div class="race-name">Madridi GP ★</div><div class="race-location">Madrid — IFEMA (uus raja debüüt!)</div></div><div class="race-date">11–13. september</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R17</div><div><div class="race-name">Aserbaidžaani GP</div><div class="race-location">Baku</div></div><div class="race-date">26. september</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R18</div><div><div class="race-name">Singapuri GP <span class="race-sprint">SPRINT</span></div><div class="race-location">Marina Bay</div></div><div class="race-date">9–11. oktoober</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R19</div><div><div class="race-name">USA GP</div><div class="race-location">Austin — COTA</div></div><div class="race-date">23–25. oktoober</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R20</div><div><div class="race-name">Mehhiko GP</div><div class="race-location">Mexico City</div></div><div class="race-date">31. okt – 2. nov</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R21</div><div><div class="race-name">Brasiilia GP</div><div class="race-location">São Paulo — Interlagos</div></div><div class="race-date">6–8. november</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R22</div><div><div class="race-name">Las Vegas GP</div><div class="race-location">Las Vegas Strip</div></div><div class="race-date">21. november</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R23</div><div><div class="race-name">Katari GP</div><div class="race-location">Lusail</div></div><div class="race-date">29. november</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+        <div class="race-row fade-in"><div class="race-round">R24</div><div><div class="race-name">Abu Dhabi GP</div><div class="race-location">Yas Marina</div></div><div class="race-date">4–6. detsember</div><div class="race-status"><span class="badge badge-coming">Tulemas</span></div></div>
+    </div>
+</section>
+
+<footer>
+    <div class="logo" style="font-size:1.2em">F<span style="color:var(--red)">1</span> 2026</div>
+    <div>Vormel 2026 — Veebitehnoloogiad Sessioon 2</div>
+</footer>
+
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('visible'), 60 * i);
+            }
+        });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>
