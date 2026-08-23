@@ -5,10 +5,18 @@ function App() {
   const [schedule, setSchedule] = useState([]);
   const [selectedResults, setSelectedResults] = useState(null);
 
-  function viewResults(round) {
+  function viewResults(round, raceName) {
     fetch(`http://localhost:3001/api/results/${round}`)
-      .then(res => res.json())
-      .then(data => setSelectedResults(data));
+      .then(res => {
+        if (!res.ok) {
+          setSelectedResults({ raceName, Results: [] });
+          return null;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data) setSelectedResults(data);
+      });
   }
 
   useEffect(() => {
@@ -38,7 +46,7 @@ function App() {
           <li
             key={race.round}
             style={{ fontWeight: race.round === nextRace.round ? 'bold' : 'normal', cursor: 'pointer' }}
-            onClick={() => viewResults(race.round)}
+            onClick={() => viewResults(race.round, race.raceName)}
           >
             Round {race.round}: {race.raceName} — {race.date}
           </li>
@@ -48,13 +56,17 @@ function App() {
       {selectedResults && (
         <div>
           <h1>{selectedResults.raceName} Results</h1>
-          <ol>
-            {selectedResults.Results.map(result => (
-              <li key={result.position}>
-                {result.Driver.givenName} {result.Driver.familyName} ({result.Constructor.name}) — {result.Time?.time ?? result.status}
-              </li>
-            ))}
-          </ol>
+          {selectedResults.Results.length === 0 ? (
+            <p>Results not available yet — check back after the race.</p>
+          ) : (
+            <ol>
+              {selectedResults.Results.map(result => (
+                <li key={result.position}>
+                  {result.Driver.givenName} {result.Driver.familyName} ({result.Constructor.name}) — {result.Time?.time ?? result.status}
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       )}
     </div>
