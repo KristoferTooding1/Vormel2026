@@ -41,6 +41,32 @@ app.get('/api/results/:round', async (req, res) => {
     res.json(race);
 });
 
+app.get('/api/qualifying/:round', async (req, res) => {
+    const { round } = req.params;
+    const response = await fetch(`${JOLPICA_BASE}/2026/${round}/qualifying.json`);
+    const data = await response.json();
+    const race = data.MRData.RaceTable.Races[0];
+
+    if (!race) {
+        return res.status(404).json({ error: 'No qualifying results found yet' });
+    }
+
+    res.json(race);
+});
+
+app.get('/api/sprint/:round', async (req, res) => {
+    const { round } = req.params;
+    const response = await fetch(`${JOLPICA_BASE}/2026/${round}/sprint.json`);
+    const data = await response.json();
+    const race = data.MRData.RaceTable.Races[0];
+
+    if (!race) {
+        return res.status(404).json({ error: 'No sprint results found — this weekend may not have a sprint' });
+    }
+
+    res.json(race);
+});
+
 app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);
 });
