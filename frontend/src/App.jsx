@@ -29,39 +29,34 @@ function App() {
   const [selectedRace, setSelectedRace] = useState(null);
   const [countdown, setCountdown] = useState('');
 
-  function viewResults(round, raceName) {
-    fetch(`http://localhost:3001/api/results/${round}`)
-      .then(res => {
-        if (!res.ok) {
-          setSelectedResults({ raceName, Results: [] });
-          return null;
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data) setSelectedResults(data);
-      });
+  async function viewResults(round, raceName) {
+    const res = await fetch(`http://localhost:3001/api/results/${round}`);
+
+    if (!res.ok) {
+      setSelectedResults({ raceName, Results: [] });
+      return;
+    }
+
+    const data = await res.json();
+    setSelectedResults(data);
   }
 
-  function viewSessionResults(round, raceName, sessionLabel, endpoint) {
+  async function viewSessionResults(round, raceName, sessionLabel, endpoint) {
     if (!endpoint) {
       setSelectedResults({ raceName: sessionLabel, Results: [], notTracked: true });
       return;
     }
 
     const resultsKey = endpoint === 'qualifying' ? 'QualifyingResults' : 'SprintResults';
+    const res = await fetch(`http://localhost:3001/api/${endpoint}/${round}`);
 
-    fetch(`http://localhost:3001/api/${endpoint}/${round}`)
-      .then(res => {
-        if (!res.ok) {
-          setSelectedResults({ raceName: sessionLabel, Results: [] });
-          return null;
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data) setSelectedResults({ raceName: sessionLabel, Results: data[resultsKey] });
-      });
+    if (!res.ok) {
+      setSelectedResults({ raceName: sessionLabel, Results: [] });
+      return;
+    }
+
+    const data = await res.json();
+    setSelectedResults({ raceName: sessionLabel, Results: data[resultsKey] });
   }
 
   function handleRaceClick(race) {
@@ -70,16 +65,20 @@ function App() {
   }
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/next-race')
-      .then(res => res.json())
-      .then(data => setNextRace(data));
+    async function loadNextRace() {
+      const res = await fetch('http://localhost:3001/api/next-race');
+      const data = await res.json();
+      setNextRace(data);
+    }
 
-    fetch('http://localhost:3001/api/schedule')
-      .then(res => res.json())
-      .then(data => {
-        console.log(data.filter(r => r.Sprint));
-        setSchedule(data);
-      });
+    async function loadSchedule() {
+      const res = await fetch('http://localhost:3001/api/schedule');
+      const data = await res.json();
+      setSchedule(data);
+    }
+
+    loadNextRace();
+    loadSchedule();
   }, []);
 
   useEffect(() => {
@@ -104,8 +103,8 @@ function App() {
       setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
     }
 
-    updateCountdown(); 
-    const interval = setInterval(updateCountdown, 1000); 
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
   }, [nextRace]);
