@@ -27,6 +27,7 @@ function App() {
   const [schedule, setSchedule] = useState([]);
   const [selectedResults, setSelectedResults] = useState(null);
   const [selectedRace, setSelectedRace] = useState(null);
+  const [countdown, setCountdown] = useState('');
 
   function viewResults(round, raceName) {
     fetch(`http://localhost:3001/api/results/${round}`)
@@ -81,6 +82,34 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!nextRace) return;
+
+    const raceTime = new Date(`${nextRace.date}T${nextRace.time}`);
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = raceTime - now;
+
+      if (diff <= 0) {
+        setCountdown('Race weekend is live!');
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+    }
+
+    updateCountdown(); 
+    const interval = setInterval(updateCountdown, 1000); 
+
+    return () => clearInterval(interval);
+  }, [nextRace]);
+
   if (!nextRace) {
     return <p>Loading...</p>;
   }
@@ -91,7 +120,7 @@ function App() {
       <h2>{nextRace.raceName}</h2>
       <p>{nextRace.Circuit.circuitName}, {nextRace.Circuit.Location.locality}, {nextRace.Circuit.Location.country}</p>
       <p>{nextRace.date} at {nextRace.time}</p>
-
+      <p>{countdown}</p>
       <h1>Full Schedule</h1>
       <ul>
         {schedule.map(race => (
