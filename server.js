@@ -67,6 +67,30 @@ app.get('/api/sprint/:round', async (req, res) => {
     res.json(race);
 });
 
+app.get('/api/driver-standings', async (req, res) => {
+    const response = await fetch(`${JOLPICA_BASE}/2026/driverStandings.json`);
+    const data = await response.json();
+    const standings = data.MRData.StandingsTable.StandingsLists[0];
+
+    if (!standings) {
+        return res.status(404).json({ error: 'No standings available yet' });
+    }
+
+    res.json(standings.DriverStandings);
+});
+
+app.get('/api/constructor-standings', async (req, res) => {
+    const response = await fetch(`${JOLPICA_BASE}/2026/constructorStandings.json`);
+    const data = await response.json();
+    const standings = data.MRData.StandingsTable.StandingsLists[0];
+
+    if (!standings) {
+        return res.status(404).json({ error: 'No standings available yet' });
+    }
+
+    res.json(standings.ConstructorStandings);
+});
+
 app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);
 });
