@@ -28,6 +28,9 @@ function App() {
   const [selectedResults, setSelectedResults] = useState(null);
   const [selectedRace, setSelectedRace] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [driverStandings, setDriverStandings] = useState([]);
+  const [constructorStandings, setConstructorStandings] = useState([]);
+  const [standingsView, setStandingsView] = useState('drivers'); // toggle between 'drivers' and 'constructors'
 
   async function viewResults(round, raceName) {
     const res = await fetch(`http://localhost:3001/api/results/${round}`);
@@ -77,8 +80,22 @@ function App() {
       setSchedule(data);
     }
 
+    async function loadDriverStandings() {
+      const res = await fetch('http://localhost:3001/api/driver-standings');
+      const data = await res.json();
+      setDriverStandings(data);
+    }
+
+    async function loadConstructorStandings() {
+      const res = await fetch('http://localhost:3001/api/constructor-standings');
+      const data = await res.json();
+      setConstructorStandings(data);
+    }
+
     loadNextRace();
     loadSchedule();
+    loadDriverStandings();
+    loadConstructorStandings();
   }, []);
 
   useEffect(() => {
@@ -120,6 +137,38 @@ function App() {
       <p>{nextRace.Circuit.circuitName}, {nextRace.Circuit.Location.locality}, {nextRace.Circuit.Location.country}</p>
       <p>{nextRace.date} at {nextRace.time}</p>
       <p>{countdown}</p>
+
+      {driverStandings.length >= 3 && (
+        <div>
+          <h1>Leaders</h1>
+          <p>🥈 2nd: {driverStandings[1].Driver.givenName} {driverStandings[1].Driver.familyName} — {driverStandings[1].points} pts</p>
+          <p>🥇 1st: {driverStandings[0].Driver.givenName} {driverStandings[0].Driver.familyName} — {driverStandings[0].points} pts</p>
+          <p>🥉 3rd: {driverStandings[2].Driver.givenName} {driverStandings[2].Driver.familyName} — {driverStandings[2].points} pts</p>
+        </div>
+      )}
+
+      <h1>Championship Standings</h1>
+      <button onClick={() => setStandingsView('drivers')}>Drivers</button>
+      <button onClick={() => setStandingsView('constructors')}>Constructors</button>
+
+      {standingsView === 'drivers' ? (
+        <ol>
+          {driverStandings.map(d => (
+            <li key={d.Driver.driverId}>
+              {d.Driver.givenName} {d.Driver.familyName} — {d.points} pts ({d.wins} wins)
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <ol>
+          {constructorStandings.map(c => (
+            <li key={c.Constructor.constructorId}>
+              {c.Constructor.name} — {c.points} pts ({c.wins} wins)
+            </li>
+          ))}
+        </ol>
+      )}
+
       <h1>Full Schedule</h1>
       <ul>
         {schedule.map(race => (
