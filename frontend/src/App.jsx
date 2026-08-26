@@ -24,6 +24,14 @@ const TEAM_COLORS = {
   cadillac: '#C6A664',
 };
 
+const COUNTRY_CODES = {
+  Australia: 'au', China: 'cn', Japan: 'jp', USA: 'us', Italy: 'it',
+  Monaco: 'mc', Spain: 'es', Canada: 'ca', Austria: 'at', UK: 'gb',
+  Belgium: 'be', Hungary: 'hu', Netherlands: 'nl', Azerbaijan: 'az',
+  Singapore: 'sg', Mexico: 'mx', Brazil: 'br', Qatar: 'qa',
+  'UAE': 'ae', Bahrain: 'bh',
+};
+
 function getWeekendSessions(race) {
   return SESSION_TYPES
     .filter(s => race[s.key])
@@ -42,7 +50,7 @@ function App() {
   const [schedule, setSchedule] = useState([]);
   const [selectedResults, setSelectedResults] = useState(null);
   const [selectedRace, setSelectedRace] = useState(null);
-  const [countdown, setCountdown] = useState('');
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [driverStandings, setDriverStandings] = useState([]);
   const [constructorStandings, setConstructorStandings] = useState([]);
   const [standingsView, setStandingsView] = useState('drivers');
@@ -123,16 +131,16 @@ function App() {
       const diff = raceTime - now;
 
       if (diff <= 0) {
-        setCountdown('Race weekend is live!');
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, live: true });
         return;
       }
 
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-
-      setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      setCountdown({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
     }
 
     updateCountdown();
@@ -149,10 +157,40 @@ function App() {
     <div>
       <section className="panel">
         <h1>Next Race</h1>
-        <h2>{nextRace.raceName}</h2>
+        <div className="race-title-row">
+          {COUNTRY_CODES[nextRace.Circuit.Location.country] && (
+            <img
+              src={`https://flagcdn.com/w80/${COUNTRY_CODES[nextRace.Circuit.Location.country]}.png`}
+              alt={nextRace.Circuit.Location.country}
+              className="flag"
+            />
+          )}
+          <h2>{nextRace.raceName}</h2>
+        </div>
         <p>{nextRace.Circuit.circuitName}, {nextRace.Circuit.Location.locality}, {nextRace.Circuit.Location.country}</p>
         <p>{nextRace.date} at {nextRace.time}</p>
-        <p className="countdown">{countdown}</p>
+        {countdown.live ? (
+          <p className="countdown-live">Race weekend is live!</p>
+        ) : (
+          <div className="countdown-clock">
+            <div className="countdown-unit">
+              <span className="countdown-value">{String(countdown.days).padStart(2, '0')}</span>
+              <span className="countdown-label">Days</span>
+            </div>
+            <div className="countdown-unit">
+              <span className="countdown-value">{String(countdown.hours).padStart(2, '0')}</span>
+              <span className="countdown-label">Hrs</span>
+            </div>
+            <div className="countdown-unit">
+              <span className="countdown-value">{String(countdown.minutes).padStart(2, '0')}</span>
+              <span className="countdown-label">Min</span>
+            </div>
+            <div className="countdown-unit">
+              <span className="countdown-value">{String(countdown.seconds).padStart(2, '0')}</span>
+              <span className="countdown-label">Sec</span>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="stripe"></div>

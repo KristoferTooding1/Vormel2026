@@ -144,3 +144,54 @@
      font-size: 13px;
      text-align: right;
    }
+
+   .countdown-clock {
+     display: flex;
+     gap: 10px;
+     margin-top: 12px;
+   }
+
+   .countdown-unit {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     background: var(--bg);
+     border: 1px solid var(--border);
+     border-radius: 4px;
+     padding: 10px 16px;
+     min-width: 60px;
+   }
+
+   .countdown-value {
+     font-family: var(--mono);
+     font-size: 28px;
+     font-weight: 500;
+     color: var(--text-h);
+   }
+
+   .countdown-label {
+     font-size: 11px;
+     text-transform: uppercase;
+     letter-spacing: 0.08em;
+     margin-top: 2px;
+   }
+
+   .countdown-live {
+     font-family: var(--mono);
+     color: var(--accent);
+     font-size: 20px;
+     font-weight: 600;
+   }
+
+   .race-title-row {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+   }
+
+   .flag {
+     width: 40px;
+     height: auto;
+     border: 1px solid var(--border);
+     border-radius: 2px;
+   }
