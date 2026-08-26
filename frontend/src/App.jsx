@@ -10,6 +10,20 @@ const SESSION_TYPES = [
   { key: 'Qualifying', label: 'Qualifying', hasResults: true, endpoint: 'qualifying' },
 ];
 
+const TEAM_COLORS = {
+  mercedes: '#00D2BE',
+  ferrari: '#DC0000',
+  mclaren: '#FF8000',
+  red_bull: '#3671C6',
+  rb: '#6692FF',
+  alpine: '#0090FF',
+  haas: '#B6BABD',
+  audi: '#BB0A30',
+  williams: '#00A0DE',
+  aston_martin: '#229971',
+  cadillac: '#C6A664',
+};
+
 function getWeekendSessions(race) {
   return SESSION_TYPES
     .filter(s => race[s.key])
@@ -170,26 +184,48 @@ function App() {
 
       <section className="panel">
         <h1>Championship Standings</h1>
-        <button onClick={() => setStandingsView('drivers')}>Drivers</button>
-        <button onClick={() => setStandingsView('constructors')}>Constructors</button>
+        <div className="toggle-group">
+          <button
+            className={`toggle-btn ${standingsView === 'drivers' ? 'active' : ''}`}
+            onClick={() => setStandingsView('drivers')}
+          >
+            Drivers
+          </button>
+          <button
+            className={`toggle-btn ${standingsView === 'constructors' ? 'active' : ''}`}
+            onClick={() => setStandingsView('constructors')}
+          >
+            Constructors
+          </button>
+        </div>
 
-        {standingsView === 'drivers' ? (
-          <ol>
-            {driverStandings.map(d => (
-              <li key={d.Driver.driverId}>
-                {d.Driver.givenName} {d.Driver.familyName} — {d.points} pts ({d.wins} wins)
-              </li>
+        <div className="standings-list">
+          {standingsView === 'drivers'
+            ? driverStandings.map(d => (
+              <div
+                key={d.Driver.driverId}
+                className="standings-row"
+                style={{ borderLeftColor: TEAM_COLORS[d.Constructors[0].constructorId] || 'var(--border)' }}
+              >
+                <span className="standings-pos">{d.position}</span>
+                <span className="standings-name">{d.Driver.givenName} {d.Driver.familyName}</span>
+                <span className="standings-pts">{d.points} pts</span>
+                <span className="standings-wins">{d.wins}W</span>
+              </div>
+            ))
+            : constructorStandings.map(c => (
+              <div
+                key={c.Constructor.constructorId}
+                className="standings-row"
+                style={{ borderLeftColor: TEAM_COLORS[c.Constructor.constructorId] || 'var(--border)' }}
+              >
+                <span className="standings-pos">{c.position}</span>
+                <span className="standings-name">{c.Constructor.name}</span>
+                <span className="standings-pts">{c.points} pts</span>
+                <span className="standings-wins">{c.wins}W</span>
+              </div>
             ))}
-          </ol>
-        ) : (
-          <ol>
-            {constructorStandings.map(c => (
-              <li key={c.Constructor.constructorId}>
-                {c.Constructor.name} — {c.points} pts ({c.wins} wins)
-              </li>
-            ))}
-          </ol>
-        )}
+        </div>
       </section>
 
       <div className="stripe"></div>

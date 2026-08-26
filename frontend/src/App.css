@@ -80,3 +80,67 @@
      order: 3;
      border-top-color: #CD7F32;
    }
+
+   .toggle-group {
+     display: flex;
+     gap: 8px;
+     margin: 16px 0 12px;
+   }
+
+   .toggle-btn {
+     font-family: var(--sans);
+     font-size: 14px;
+     padding: 8px 18px;
+     background: var(--bg);
+     color: var(--text);
+     border: 1px solid var(--border);
+     border-radius: 3px;
+     cursor: pointer;
+     transition: background 0.15s, color 0.15s;
+   }
+
+   .toggle-btn:hover {
+     border-color: var(--accent);
+   }
+
+   .toggle-btn.active {
+     background: var(--accent);
+     color: var(--text-h);
+     border-color: var(--accent);
+   }
+
+   .standings-list {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+   }
+
+   .standings-row {
+     display: grid;
+     grid-template-columns: 32px 1fr 70px 50px;
+     align-items: center;
+     gap: 12px;
+     padding: 10px 14px;
+     background: var(--bg);
+     border: 1px solid var(--border);
+     border-left: 3px solid var(--border);
+     border-radius: 3px;
+   }
+
+   .standings-pos {
+     font-family: var(--mono);
+     font-size: 14px;
+   }
+
+   .standings-name {
+     color: var(--text-h);
+     font-size: 15px;
+     text-align: left;
+   }
+
+   .standings-pts,
+   .standings-wins {
+     font-family: var(--mono);
+     font-size: 13px;
+     text-align: right;
+   }
