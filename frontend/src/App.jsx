@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './App.css';
 
 const SESSION_TYPES = [
   { key: 'FirstPractice', label: 'Free Practice 1', hasResults: false },
@@ -30,7 +31,7 @@ function App() {
   const [countdown, setCountdown] = useState('');
   const [driverStandings, setDriverStandings] = useState([]);
   const [constructorStandings, setConstructorStandings] = useState([]);
-  const [standingsView, setStandingsView] = useState('drivers'); // toggle between 'drivers' and 'constructors'
+  const [standingsView, setStandingsView] = useState('drivers');
 
   async function viewResults(round, raceName) {
     const res = await fetch(`http://localhost:3001/api/results/${round}`);
@@ -132,99 +133,123 @@ function App() {
 
   return (
     <div>
-      <h1>Next Race</h1>
-      <h2>{nextRace.raceName}</h2>
-      <p>{nextRace.Circuit.circuitName}, {nextRace.Circuit.Location.locality}, {nextRace.Circuit.Location.country}</p>
-      <p>{nextRace.date} at {nextRace.time}</p>
-      <p>{countdown}</p>
+      { }
+      <section className="panel">
+        <h1>Next Race</h1>
+        <h2>{nextRace.raceName}</h2>
+        <p>{nextRace.Circuit.circuitName}, {nextRace.Circuit.Location.locality}, {nextRace.Circuit.Location.country}</p>
+        <p>{nextRace.date} at {nextRace.time}</p>
+        <p className="countdown">{countdown}</p>
+      </section>
 
+      <div className="stripe"></div>
+
+      { }
       {driverStandings.length >= 3 && (
-        <div>
-          <h1>Leaders</h1>
+        <section className="panel">
+          <h1>Podium</h1>
           <p>🥈 2nd: {driverStandings[1].Driver.givenName} {driverStandings[1].Driver.familyName} — {driverStandings[1].points} pts</p>
           <p>🥇 1st: {driverStandings[0].Driver.givenName} {driverStandings[0].Driver.familyName} — {driverStandings[0].points} pts</p>
           <p>🥉 3rd: {driverStandings[2].Driver.givenName} {driverStandings[2].Driver.familyName} — {driverStandings[2].points} pts</p>
-        </div>
+        </section>
       )}
 
-      <h1>Championship Standings</h1>
-      <button onClick={() => setStandingsView('drivers')}>Drivers</button>
-      <button onClick={() => setStandingsView('constructors')}>Constructors</button>
+      <div className="stripe"></div>
 
-      {standingsView === 'drivers' ? (
-        <ol>
-          {driverStandings.map(d => (
-            <li key={d.Driver.driverId}>
-              {d.Driver.givenName} {d.Driver.familyName} — {d.points} pts ({d.wins} wins)
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <ol>
-          {constructorStandings.map(c => (
-            <li key={c.Constructor.constructorId}>
-              {c.Constructor.name} — {c.points} pts ({c.wins} wins)
-            </li>
-          ))}
-        </ol>
-      )}
+      { }
+      <section className="panel">
+        <h1>Championship Standings</h1>
+        <button onClick={() => setStandingsView('drivers')}>Drivers</button>
+        <button onClick={() => setStandingsView('constructors')}>Constructors</button>
 
-      <h1>Full Schedule</h1>
-      <ul>
-        {schedule.map(race => (
-          <li
-            key={race.round}
-            style={{ fontWeight: race.round === nextRace.round ? 'bold' : 'normal', cursor: 'pointer' }}
-            onClick={() => handleRaceClick(race)}
-          >
-            Round {race.round}: {race.raceName} — {race.date}
-          </li>
-        ))}
-      </ul>
-
-      {selectedRace && (
-        <div>
-          <h1>{selectedRace.raceName} Weekend</h1>
-          <ul>
-            {getWeekendSessions(selectedRace).map(session => (
-              <li
-                key={session.label}
-                style={{ cursor: 'pointer' }}
-                onClick={() => viewSessionResults(selectedRace.round, selectedRace.raceName, session.label, session.endpoint)}
-              >
-                {session.label} — {session.date} at {session.time}
+        {standingsView === 'drivers' ? (
+          <ol>
+            {driverStandings.map(d => (
+              <li key={d.Driver.driverId}>
+                {d.Driver.givenName} {d.Driver.familyName} — {d.points} pts ({d.wins} wins)
               </li>
             ))}
-            <li
-              style={{ cursor: 'pointer', fontWeight: 'bold' }}
-              onClick={() => viewResults(selectedRace.round, selectedRace.raceName)}
-            >
-              Race — {selectedRace.date} at {selectedRace.time}
-            </li>
-          </ul>
-        </div>
-      )}
+          </ol>
+        ) : (
+          <ol>
+            {constructorStandings.map(c => (
+              <li key={c.Constructor.constructorId}>
+                {c.Constructor.name} — {c.points} pts ({c.wins} wins)
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
 
-      {selectedResults && (
-        <div>
-          <h1>{selectedResults.raceName} Results</h1>
-          {selectedResults.notTracked ? (
-            <p>Results aren't tracked for this session.</p>
-          ) : selectedResults.Results.length === 0 ? (
-            <p>Results not available yet — check back after the session.</p>
-          ) : (
-            <ol>
-              {selectedResults.Results.map(result => (
-                <li key={result.position}>
-                  {result.Driver.givenName} {result.Driver.familyName} ({result.Constructor.name})
-                  {result.Q1 !== undefined
-                    ? ` — Q1: ${result.Q1 || '—'}, Q2: ${result.Q2 || '—'}, Q3: ${result.Q3 || '—'}`
-                    : ` — ${result.Time?.time ?? result.status}`}
+      <div className="stripe"></div>
+
+      { }
+      <section className="panel">
+        <h1>Full Schedule</h1>
+        <ul>
+          {schedule.map(race => (
+            <li
+              key={race.round}
+              style={{ fontWeight: race.round === nextRace.round ? 'bold' : 'normal', cursor: 'pointer' }}
+              onClick={() => handleRaceClick(race)}
+            >
+              Round {race.round}: {race.raceName} — {race.date}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      { }
+      {selectedRace && (
+        <>
+          <div className="stripe"></div>
+          <section className="panel">
+            <h1>{selectedRace.raceName} Weekend</h1>
+            <ul>
+              {getWeekendSessions(selectedRace).map(session => (
+                <li
+                  key={session.label}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => viewSessionResults(selectedRace.round, selectedRace.raceName, session.label, session.endpoint)}
+                >
+                  {session.label} — {session.date} at {session.time}
                 </li>
               ))}
-            </ol>
-          )}
-        </div>
+              <li
+                style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={() => viewResults(selectedRace.round, selectedRace.raceName)}
+              >
+                Race — {selectedRace.date} at {selectedRace.time}
+              </li>
+            </ul>
+          </section>
+        </>
+      )}
+
+      { }
+      {selectedResults && (
+        <>
+          <div className="stripe"></div>
+          <section className="panel">
+            <h1>{selectedResults.raceName} Results</h1>
+            {selectedResults.notTracked ? (
+              <p>Results aren't tracked for this session.</p>
+            ) : selectedResults.Results.length === 0 ? (
+              <p>Results not available yet — check back after the session.</p>
+            ) : (
+              <ol>
+                {selectedResults.Results.map(result => (
+                  <li key={result.position}>
+                    {result.Driver.givenName} {result.Driver.familyName} ({result.Constructor.name})
+                    {result.Q1 !== undefined
+                      ? ` — Q1: ${result.Q1 || '—'}, Q2: ${result.Q2 || '—'}, Q3: ${result.Q3 || '—'}`
+                      : ` — ${result.Time?.time ?? result.status}`}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </>
       )}
     </div>
   );
