@@ -299,23 +299,23 @@ function App() {
           <div className="stripe"></div>
           <section className="panel">
             <h1>{selectedRace.raceName} Weekend</h1>
-            <ul>
+            <div className="session-tabs">
               {getWeekendSessions(selectedRace).map(session => (
-                <li
+                <button
                   key={session.label}
-                  style={{ cursor: 'pointer' }}
+                  className="session-tab"
                   onClick={() => viewSessionResults(selectedRace.round, selectedRace.raceName, session.label, session.endpoint)}
                 >
-                  {session.label} — {session.date} at {session.time}
-                </li>
+                  {session.label}
+                </button>
               ))}
-              <li
-                style={{ cursor: 'pointer', fontWeight: 'bold' }}
+              <button
+                className="session-tab race"
                 onClick={() => viewResults(selectedRace.round, selectedRace.raceName)}
               >
-                Race — {selectedRace.date} at {selectedRace.time}
-              </li>
-            </ul>
+                Race
+              </button>
+            </div>
           </section>
         </>
       )}
@@ -326,20 +326,24 @@ function App() {
           <section className="panel">
             <h1>{selectedResults.raceName} Results</h1>
             {selectedResults.notTracked ? (
-              <p>Results aren't tracked for this session.</p>
+              <p className="results-empty">Results aren't tracked for this session.</p>
             ) : selectedResults.Results.length === 0 ? (
-              <p>Results not available yet — check back after the session.</p>
+              <p className="results-empty">Results not available yet — check back after the session.</p>
             ) : (
-              <ol>
-                {selectedResults.Results.map(result => (
-                  <li key={result.position}>
-                    {result.Driver.givenName} {result.Driver.familyName} ({result.Constructor.name})
-                    {result.Q1 !== undefined
-                      ? ` — Q1: ${result.Q1 || '—'}, Q2: ${result.Q2 || '—'}, Q3: ${result.Q3 || '—'}`
-                      : ` — ${result.Time?.time ?? result.status}`}
-                  </li>
+              <div className="results-table">
+                {selectedResults.Results.map((result, i) => (
+                  <div key={result.position} className={`results-row pos-${i < 3 ? i + 1 : 'other'}`}>
+                    <span className="results-pos">{result.position}</span>
+                    <span className="results-name">{result.Driver.givenName} {result.Driver.familyName}</span>
+                    <span className="results-team">{result.Constructor.name}</span>
+                    <span className="results-time">
+                      {result.Q1 !== undefined
+                        ? `Q1 ${result.Q1 || '—'}  Q2 ${result.Q2 || '—'}  Q3 ${result.Q3 || '—'}`
+                        : (result.Time?.time ?? result.status)}
+                    </span>
+                  </div>
                 ))}
-              </ol>
+              </div>
             )}
           </section>
         </>
