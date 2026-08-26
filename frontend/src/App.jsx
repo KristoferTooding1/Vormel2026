@@ -133,7 +133,6 @@ function App() {
 
   return (
     <div>
-      { }
       <section className="panel">
         <h1>Next Race</h1>
         <h2>{nextRace.raceName}</h2>
@@ -144,19 +143,31 @@ function App() {
 
       <div className="stripe"></div>
 
-      { }
       {driverStandings.length >= 3 && (
         <section className="panel">
           <h1>Podium</h1>
-          <p>🥈 2nd: {driverStandings[1].Driver.givenName} {driverStandings[1].Driver.familyName} — {driverStandings[1].points} pts</p>
-          <p>🥇 1st: {driverStandings[0].Driver.givenName} {driverStandings[0].Driver.familyName} — {driverStandings[0].points} pts</p>
-          <p>🥉 3rd: {driverStandings[2].Driver.givenName} {driverStandings[2].Driver.familyName} — {driverStandings[2].points} pts</p>
+          <div className="podium">
+            <div className="podium-block p2">
+              <span className="podium-pos">2</span>
+              <span className="podium-name">{driverStandings[1].Driver.givenName} {driverStandings[1].Driver.familyName}</span>
+              <span className="podium-pts">{driverStandings[1].points} pts</span>
+            </div>
+            <div className="podium-block p1">
+              <span className="podium-pos">1</span>
+              <span className="podium-name">{driverStandings[0].Driver.givenName} {driverStandings[0].Driver.familyName}</span>
+              <span className="podium-pts">{driverStandings[0].points} pts</span>
+            </div>
+            <div className="podium-block p3">
+              <span className="podium-pos">3</span>
+              <span className="podium-name">{driverStandings[2].Driver.givenName} {driverStandings[2].Driver.familyName}</span>
+              <span className="podium-pts">{driverStandings[2].points} pts</span>
+            </div>
+          </div>
         </section>
       )}
 
       <div className="stripe"></div>
 
-      { }
       <section className="panel">
         <h1>Championship Standings</h1>
         <button onClick={() => setStandingsView('drivers')}>Drivers</button>
@@ -183,7 +194,6 @@ function App() {
 
       <div className="stripe"></div>
 
-      { }
       <section className="panel">
         <h1>Full Schedule</h1>
         <ul>
@@ -199,7 +209,6 @@ function App() {
         </ul>
       </section>
 
-      { }
       {selectedRace && (
         <>
           <div className="stripe"></div>
@@ -226,7 +235,6 @@ function App() {
         </>
       )}
 
-      { }
       {selectedResults && (
         <>
           <div className="stripe"></div>
