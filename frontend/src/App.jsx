@@ -29,7 +29,7 @@ const COUNTRY_CODES = {
   Monaco: 'mc', Spain: 'es', Canada: 'ca', Austria: 'at', UK: 'gb',
   Belgium: 'be', Hungary: 'hu', Netherlands: 'nl', Azerbaijan: 'az',
   Singapore: 'sg', Mexico: 'mx', Brazil: 'br', Qatar: 'qa',
-  'UAE': 'ae', Bahrain: 'bh',
+  'UAE': 'ae', Bahrain: 'bh', Malaysia: 'my',
 };
 
 function getWeekendSessions(race) {
@@ -270,17 +270,28 @@ function App() {
 
       <section className="panel">
         <h1>Full Schedule</h1>
-        <ul>
+        <div className="schedule-list">
           {schedule.map(race => (
-            <li
+            <div
               key={race.round}
-              style={{ fontWeight: race.round === nextRace.round ? 'bold' : 'normal', cursor: 'pointer' }}
+              className={`schedule-row ${race.round === nextRace.round ? 'next' : ''} ${selectedRace?.round === race.round ? 'selected' : ''}`}
               onClick={() => handleRaceClick(race)}
             >
-              Round {race.round}: {race.raceName} — {race.date}
-            </li>
+              <span className="schedule-round">{race.round}</span>
+              {COUNTRY_CODES[race.Circuit.Location.country] ? (
+                <img
+                  src={`https://flagcdn.com/w40/${COUNTRY_CODES[race.Circuit.Location.country]}.png`}
+                  alt={race.Circuit.Location.country}
+                  className="schedule-flag"
+                />
+              ) : (
+                <span className="schedule-flag"></span>
+              )}
+              <span className="schedule-name">{race.raceName}</span>
+              <span className="schedule-date">{race.date}</span>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
 
       {selectedRace && (

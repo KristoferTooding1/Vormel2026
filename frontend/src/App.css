@@ -195,3 +195,61 @@
      border: 1px solid var(--border);
      border-radius: 2px;
    }
+
+   .schedule-list {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+     margin-top: 12px;
+   }
+
+   .schedule-row {
+     display: grid;
+     grid-template-columns: 30px 28px 1fr 90px;
+     align-items: center;
+     gap: 12px;
+     padding: 10px 14px;
+     background: var(--bg);
+     border: 1px solid var(--border);
+     border-radius: 3px;
+     cursor: pointer;
+     transition: border-color 0.15s, background 0.15s;
+   }
+
+   .schedule-row:hover {
+     border-color: var(--accent);
+   }
+
+   .schedule-row.next {
+     border-left: 3px solid var(--accent);
+   }
+
+   .schedule-row.selected {
+     background: var(--accent-bg);
+     border-color: var(--accent);
+   }
+
+   .schedule-round {
+     font-family: var(--mono);
+     color: var(--text);
+     font-size: 13px;
+   }
+
+   .schedule-flag {
+     width: 22px;
+     height: auto;
+     border: 1px solid var(--border);
+     border-radius: 2px;
+   }
+
+   .schedule-name {
+     color: var(--text-h);
+     font-size: 15px;
+     text-align: left;
+   }
+
+   .schedule-date {
+     font-family: var(--mono);
+     font-size: 13px;
+     text-align: right;
+   }
