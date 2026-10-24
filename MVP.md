@@ -65,9 +65,9 @@ Metoodika: [Scrum / Kanban]
 
 | Tiimiliige | Roll metoodika järgi | Vastutusala |
 |------------|----------------------|-------------|
-| Kristofer | [Product owner] | [nt backlog, prioriteedid, backend] |
-| Kristofer | [Scrum master] | [nt koosolekud, frontend] |
-| Kristofer | [Arendaja] | [nt disain, testimine] |
+| Kristofer | Product owner | backlog, prioriteedid, backend |
+| Kristofer | Scrum master | koosolekud, frontend |
+| Kristofer | Arendaja | disain, testimine |
 
 ## 6. Esimene sprint
 
