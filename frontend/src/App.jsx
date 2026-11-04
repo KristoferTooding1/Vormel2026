@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
+async function fetchJson(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`);
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
 const SESSION_TYPES = [
   { key: 'FirstPractice', label: 'Free Practice 1', hasResults: false },
   { key: 'SecondPractice', label: 'Free Practice 2', hasResults: false },
@@ -56,15 +68,13 @@ function App() {
   const [standingsView, setStandingsView] = useState('drivers');
 
   async function viewResults(round, raceName) {
-    const res = await fetch(`http://localhost:3001/api/results/${round}`);
-
-    if (!res.ok) {
-      setSelectedResults({ raceName, Results: [] });
-      return;
+    try {
+      const data = await fetchJson(`/api/results/${round}`);
+      setSelectedResults(data);
+    } catch (error) {
+      console.error('Failed to load race results:', error);
+      setSelectedResults({ raceName, Results: [], error: true });
     }
-
-    const data = await res.json();
-    setSelectedResults(data);
   }
 
   async function viewSessionResults(round, raceName, sessionLabel, endpoint) {
@@ -74,15 +84,14 @@ function App() {
     }
 
     const resultsKey = endpoint === 'qualifying' ? 'QualifyingResults' : 'SprintResults';
-    const res = await fetch(`http://localhost:3001/api/${endpoint}/${round}`);
 
-    if (!res.ok) {
-      setSelectedResults({ raceName: sessionLabel, Results: [] });
-      return;
+    try {
+      const data = await fetchJson(`/api/${endpoint}/${round}`);
+      setSelectedResults({ raceName: sessionLabel, Results: data[resultsKey] });
+    } catch (error) {
+      console.error('Failed to load session results:', error);
+      setSelectedResults({ raceName: sessionLabel, Results: [], error: true });
     }
-
-    const data = await res.json();
-    setSelectedResults({ raceName: sessionLabel, Results: data[resultsKey] });
   }
 
   function handleRaceClick(race) {
@@ -92,26 +101,22 @@ function App() {
 
   useEffect(() => {
     async function loadNextRace() {
-      const res = await fetch('http://localhost:3001/api/next-race');
-      const data = await res.json();
+      const data = await fetchJson('/api/next-race');
       setNextRace(data);
     }
 
     async function loadSchedule() {
-      const res = await fetch('http://localhost:3001/api/schedule');
-      const data = await res.json();
+      const data = await fetchJson('/api/schedule');
       setSchedule(data);
     }
 
     async function loadDriverStandings() {
-      const res = await fetch('http://localhost:3001/api/driver-standings');
-      const data = await res.json();
+      const data = await fetchJson('/api/driver-standings');
       setDriverStandings(data);
     }
 
     async function loadConstructorStandings() {
-      const res = await fetch('http://localhost:3001/api/constructor-standings');
-      const data = await res.json();
+      const data = await fetchJson('/api/constructor-standings');
       setConstructorStandings(data);
     }
 
@@ -325,7 +330,9 @@ function App() {
           <div className="stripe"></div>
           <section className="panel">
             <h1>{selectedResults.raceName} Results</h1>
-            {selectedResults.notTracked ? (
+            {selectedResults.error ? (
+              <p className="results-empty">Results could not be loaded right now.</p>
+            ) : selectedResults.notTracked ? (
               <p className="results-empty">Results aren't tracked for this session.</p>
             ) : selectedResults.Results.length === 0 ? (
               <p className="results-empty">Results not available yet — check back after the session.</p>
