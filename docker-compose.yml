@@ -3,6 +3,8 @@
        build: .
        ports:
          - "3001:3001"
+       volumes:
+         - db-data:/app/data
 
      frontend:
        build: ./frontend
@@ -10,3 +12,6 @@
          - "8080:80"
        depends_on:
          - backend
+
+   volumes:
+     db-data:

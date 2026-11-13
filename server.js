@@ -1,11 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { createAuth } = require('./auth');
 
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const PORT = Number(process.env.PORT || 3001);
 const JOLPICA_BASE = process.env.JOLPICA_BASE || 'https://api.jolpi.ca/ergast/f1';
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'vormel.db');
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:8080')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
 async function fetchJolpica(endpoint) {
     const response = await fetch(`${JOLPICA_BASE}${endpoint}`);
@@ -18,10 +25,14 @@ async function fetchJolpica(endpoint) {
     return response.json();
 }
 
-function createApp() {
+function createApp({ dbPath = DB_PATH } = {}) {
     const app = express();
+    const auth = createAuth({ dbPath, secureCookies: COOKIE_SECURE });
 
-    app.use(cors());
+    // Credentialed requests (the session cookie) require explicit origins, not "*".
+    app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
+
+    app.use('/api/auth', auth.router);
 
     app.get('/health', (req, res) => {
         res.json({ status: 'ok', uptime: process.uptime() });
@@ -142,6 +153,11 @@ function createApp() {
     });
 
     app.use((err, req, res, next) => {
+        // Malformed or oversized request bodies are the client's fault, not a server error.
+        if (err.status >= 400 && err.status < 500) {
+            return res.status(err.status).json({ error: 'Invalid request.' });
+        }
+
         console.error('Unhandled server error:', err);
         res.status(500).json({ error: 'Internal server error' });
     });

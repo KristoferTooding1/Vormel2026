@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-
-async function fetchJson(path) {
-  const response = await fetch(`${API_BASE_URL}${path}`);
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  return response.json();
-}
+import AuthBar from './AuthBar';
+import { fetchJson } from './api';
 
 const SESSION_TYPES = [
   { key: 'FirstPractice', label: 'Free Practice 1', hasResults: false },
@@ -155,11 +145,17 @@ function App() {
   }, [nextRace]);
 
   if (!nextRace) {
-    return <p>Loading...</p>;
+    return (
+      <div>
+        <AuthBar />
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div>
+      <AuthBar />
       <section className="panel">
         <h1>Next Race</h1>
         <div className="race-title-row">

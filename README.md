@@ -14,12 +14,14 @@ Vormel2026 was built from the ground up as a two-part application: an Express ba
 - **Session results** — race, qualifying (Q1/Q2/Q3), and sprint results, with honest "not tracked" messaging for sessions the API doesn't cover (practice, sprint qualifying)
 - **Championship podium** — current top 3 drivers, styled as a real podium
 - **Full standings** — drivers and constructors, with team-colored rows
+- **User accounts** — register, log in and log out; the site itself stays public
 
 ## Tech stack
 
 **Backend**
 - Node.js + Express
 - Consumes the [Jolpica-F1 API](https://api.jolpi.ca/ergast/f1) (no auth required)
+- User accounts stored in SQLite via Node's built-in `node:sqlite` (requires Node 24+), passwords hashed with scrypt, sessions kept in an HttpOnly cookie
 
 **Frontend**
 - React 18 (Vite)
@@ -68,6 +70,20 @@ npm run dev
 | `GET /api/sprint/:round` | Sprint results (sprint weekends only) |
 | `GET /api/driver-standings` | Current driver championship standings |
 | `GET /api/constructor-standings` | Current constructor championship standings |
+| `POST /api/auth/register` | Create an account (`{ username, password }`) and log in |
+| `POST /api/auth/login` | Log in (`{ username, password }`), sets the session cookie |
+| `POST /api/auth/logout` | End the current session |
+| `GET /api/auth/me` | The logged-in user, or `{ "user": null }` |
+
+## Configuration
+
+Copy `.env.example` to `.env` to override the defaults.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DB_PATH` | `./data/vormel.db` | SQLite file for accounts and sessions |
+| `CORS_ORIGIN` | `http://localhost:5173,http://localhost:8080` | Frontend origins allowed to send the login cookie |
+| `COOKIE_SECURE` | `false` | Set to `true` when serving over HTTPS |
 
 ## Known limitations
 
