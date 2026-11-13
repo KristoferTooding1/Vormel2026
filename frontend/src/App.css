@@ -374,16 +374,71 @@
      margin-right: 4px;
    }
 
+   .auth-dialog {
+     width: min(380px, calc(100vw - 32px));
+     box-sizing: border-box;
+     /* No padding here: the form fills the dialog, so only backdrop clicks hit the dialog itself. */
+     padding: 0;
+     background: var(--surface);
+     color: var(--text);
+     border: 1px solid var(--border);
+     border-top: 3px solid var(--accent);
+     border-radius: 4px;
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+   }
+
+   .auth-dialog::backdrop {
+     background: rgba(0, 0, 0, 0.65);
+   }
+
    .auth-form {
-     max-width: 360px;
-     margin: 16px 0 0 auto;
+     padding: 24px 28px;
      display: flex;
      flex-direction: column;
      gap: 12px;
    }
 
+   .auth-form-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+   }
+
    .auth-form h2 {
      margin: 0;
+   }
+
+   .auth-close {
+     font-size: 24px;
+     line-height: 1;
+     padding: 0 4px;
+     background: none;
+     color: var(--text);
+     border: none;
+     cursor: pointer;
+   }
+
+   .auth-close:hover {
+     color: var(--text-h);
+   }
+
+   .auth-switch {
+     font-size: 13px;
+     margin: 4px 0 0;
+   }
+
+   .auth-link {
+     font-size: 13px;
+     padding: 0;
+     background: none;
+     color: var(--text-h);
+     border: none;
+     text-decoration: underline;
+     cursor: pointer;
+   }
+
+   .auth-link:hover {
+     color: var(--accent);
    }
 
    .auth-field {

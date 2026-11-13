@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { authRequest } from './api';
 
 function AuthBar() {
@@ -8,12 +8,19 @@ function AuthBar() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
     authRequest('/me')
       .then(data => setUser(data.user))
       .catch(error => console.error('Failed to check login status:', error));
   }, []);
+
+  // showModal() centers the dialog, dims the page, traps focus and closes on Escape.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+  }, [mode, user]);
 
   function openForm(nextMode) {
     setMode(nextMode);
@@ -62,14 +69,14 @@ function AuthBar() {
         ) : (
           <div className="auth-actions">
             <button
-              className={`toggle-btn ${mode === 'login' ? 'active' : ''}`}
-              onClick={() => (mode === 'login' ? setMode(null) : openForm('login'))}
+              className="toggle-btn"
+              onClick={() => openForm('login')}
             >
               Log in
             </button>
             <button
-              className={`toggle-btn ${isRegister ? 'active' : ''}`}
-              onClick={() => (isRegister ? setMode(null) : openForm('register'))}
+              className="toggle-btn"
+              onClick={() => openForm('register')}
             >
               Register
             </button>
@@ -78,8 +85,21 @@ function AuthBar() {
       </div>
 
       {mode && !user && (
-        <form className="panel auth-form" onSubmit={handleSubmit}>
-          <h2>{isRegister ? 'Create account' : 'Log in'}</h2>
+        <dialog
+          ref={dialogRef}
+          className="auth-dialog"
+          aria-labelledby="auth-dialog-title"
+          onClose={() => setMode(null)}
+          onClick={event => {
+            // A click that lands on the dialog element itself is on the backdrop.
+            if (event.target === dialogRef.current) setMode(null);
+          }}
+        >
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-form-header">
+            <h2 id="auth-dialog-title">{isRegister ? 'Create account' : 'Log in'}</h2>
+            <button type="button" className="auth-close" aria-label="Close" onClick={() => setMode(null)}>×</button>
+          </div>
 
           <label className="auth-field">
             <span>Username</span>
@@ -114,7 +134,15 @@ function AuthBar() {
           <button className="toggle-btn active auth-submit" type="submit" disabled={submitting}>
             {submitting ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
           </button>
+
+          <p className="auth-switch">
+            {isRegister ? 'Already have an account?' : 'No account yet?'}{' '}
+            <button type="button" className="auth-link" onClick={() => openForm(isRegister ? 'login' : 'register')}>
+              {isRegister ? 'Log in' : 'Register'}
+            </button>
+          </p>
         </form>
+        </dialog>
       )}
     </header>
   );
