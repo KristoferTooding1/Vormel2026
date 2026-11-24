@@ -1,20 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { authRequest } from './api';
 
-function AuthBar() {
-  const [user, setUser] = useState(null);
+// The logged-in user lives in App, so the rest of the page can react to it (e.g. favourite team).
+function AuthBar({ user, onUserChange }) {
   const [mode, setMode] = useState(null); // null (closed) | 'login' | 'register'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const dialogRef = useRef(null);
-
-  useEffect(() => {
-    authRequest('/me')
-      .then(data => setUser(data.user))
-      .catch(error => console.error('Failed to check login status:', error));
-  }, []);
 
   // showModal() centers the dialog, dims the page, traps focus and closes on Escape.
   useEffect(() => {
@@ -35,7 +29,7 @@ function AuthBar() {
 
     try {
       const data = await authRequest(`/${mode}`, { username, password });
-      setUser(data.user);
+      onUserChange(data.user);
       setMode(null);
       setUsername('');
       setPassword('');
@@ -49,7 +43,7 @@ function AuthBar() {
   async function handleLogout() {
     try {
       await authRequest('/logout');
-      setUser(null);
+      onUserChange(null);
     } catch (error) {
       console.error('Failed to log out:', error);
     }

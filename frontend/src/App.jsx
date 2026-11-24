@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import AuthBar from './AuthBar';
-import { fetchJson } from './api';
+import { fetchJson, authRequest } from './api';
 
 const SESSION_TYPES = [
   { key: 'FirstPractice', label: 'Free Practice 1', hasResults: false },
@@ -47,7 +47,18 @@ function getWeekendSessions(race) {
     .sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
 }
 
+// Marks rows belonging to the user's favourite team and exposes the team colour to CSS.
+function favoriteProps(constructorId, favoriteTeam) {
+  if (!favoriteTeam || constructorId !== favoriteTeam) return {};
+  return {
+    className: 'favorite',
+    style: { '--team-color': TEAM_COLORS[constructorId] || 'var(--accent)' },
+  };
+}
+
 function App() {
+  const [user, setUser] = useState(null);
+  const [favoriteError, setFavoriteError] = useState('');
   const [nextRace, setNextRace] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [selectedResults, setSelectedResults] = useState(null);
@@ -56,6 +67,20 @@ function App() {
   const [driverStandings, setDriverStandings] = useState([]);
   const [constructorStandings, setConstructorStandings] = useState([]);
   const [standingsView, setStandingsView] = useState('drivers');
+  const favoriteTeam = user?.favoriteTeam ?? null;
+
+  async function toggleFavoriteTeam(constructorId) {
+    setFavoriteError('');
+    try {
+      const data = await authRequest('/favorite-team', {
+        constructorId: constructorId === favoriteTeam ? null : constructorId,
+      });
+      setUser(data.user);
+    } catch (error) {
+      console.error('Failed to save favourite team:', error);
+      setFavoriteError('Could not save your favourite team. Please try again.');
+    }
+  }
 
   async function viewResults(round, raceName) {
     try {
@@ -110,6 +135,10 @@ function App() {
       setConstructorStandings(data);
     }
 
+    authRequest('/me')
+      .then(data => setUser(data.user))
+      .catch(error => console.error('Failed to check login status:', error));
+
     loadNextRace();
     loadSchedule();
     loadDriverStandings();
@@ -147,7 +176,7 @@ function App() {
   if (!nextRace) {
     return (
       <div>
-        <AuthBar />
+        <AuthBar user={user} onUserChange={setUser} />
         <p>Loading...</p>
       </div>
     );
@@ -155,7 +184,7 @@ function App() {
 
   return (
     <div>
-      <AuthBar />
+      <AuthBar user={user} onUserChange={setUser} />
       <section className="panel">
         <h1>Next Race</h1>
         <div className="race-title-row">
@@ -240,31 +269,61 @@ function App() {
 
         <div className="standings-list">
           {standingsView === 'drivers'
-            ? driverStandings.map(d => (
+            ? driverStandings.map(d => {
+              const constructorId = d.Constructors[0]?.constructorId;
+              const fav = favoriteProps(constructorId, favoriteTeam);
+              return (
               <div
                 key={d.Driver.driverId}
-                className="standings-row"
-                style={{ borderLeftColor: TEAM_COLORS[d.Constructors[0].constructorId] || 'var(--border)' }}
+                className={`standings-row ${fav.className || ''}`}
+                style={{ borderLeftColor: TEAM_COLORS[constructorId] || 'var(--border)', ...fav.style }}
               >
                 <span className="standings-pos">{d.position}</span>
                 <span className="standings-name">{d.Driver.givenName} {d.Driver.familyName}</span>
                 <span className="standings-pts">{d.points} pts</span>
                 <span className="standings-wins">{d.wins}W</span>
               </div>
-            ))
-            : constructorStandings.map(c => (
+              );
+            })
+            : constructorStandings.map(c => {
+              const { constructorId, name } = c.Constructor;
+              const fav = favoriteProps(constructorId, favoriteTeam);
+              const isFavorite = constructorId === favoriteTeam;
+              return (
               <div
-                key={c.Constructor.constructorId}
-                className="standings-row"
-                style={{ borderLeftColor: TEAM_COLORS[c.Constructor.constructorId] || 'var(--border)' }}
+                key={constructorId}
+                className={`standings-row ${user ? 'with-fav' : ''} ${fav.className || ''}`}
+                style={{ borderLeftColor: TEAM_COLORS[constructorId] || 'var(--border)', ...fav.style }}
               >
                 <span className="standings-pos">{c.position}</span>
-                <span className="standings-name">{c.Constructor.name}</span>
+                <span className="standings-name">{name}</span>
                 <span className="standings-pts">{c.points} pts</span>
                 <span className="standings-wins">{c.wins}W</span>
+                {user && (
+                  <button
+                    className={`fav-btn ${isFavorite ? 'active' : ''}`}
+                    aria-pressed={isFavorite}
+                    aria-label={isFavorite ? `Remove ${name} as favourite team` : `Set ${name} as favourite team`}
+                    title={isFavorite ? 'Your favourite team' : 'Set as favourite team'}
+                    onClick={() => toggleFavoriteTeam(constructorId)}
+                  >
+                    {isFavorite ? '★' : '☆'}
+                  </button>
+                )}
               </div>
-            ))}
+              );
+            })}
         </div>
+        {standingsView === 'constructors' && (
+          <p className="fav-hint">
+            {!user
+              ? 'Log in to pick a favourite team.'
+              : favoriteTeam
+                ? 'Your team is highlighted across standings and results.'
+                : 'Tap ☆ to pick your favourite team.'}
+          </p>
+        )}
+        {favoriteError && <p className="auth-error" role="alert">{favoriteError}</p>}
       </section>
 
       <div className="stripe"></div>
@@ -334,8 +393,14 @@ function App() {
               <p className="results-empty">Results not available yet — check back after the session.</p>
             ) : (
               <div className="results-table">
-                {selectedResults.Results.map((result, i) => (
-                  <div key={result.position} className={`results-row pos-${i < 3 ? i + 1 : 'other'}`}>
+                {selectedResults.Results.map((result, i) => {
+                  const fav = favoriteProps(result.Constructor.constructorId, favoriteTeam);
+                  return (
+                  <div
+                    key={result.position}
+                    className={`results-row pos-${i < 3 ? i + 1 : 'other'} ${fav.className || ''}`}
+                    style={fav.style}
+                  >
                     <span className="results-pos">{result.position}</span>
                     <span className="results-name">{result.Driver.givenName} {result.Driver.familyName}</span>
                     <span className="results-team">{result.Constructor.name}</span>
@@ -345,7 +410,8 @@ function App() {
                         : (result.Time?.time ?? result.status)}
                     </span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

@@ -14,6 +14,7 @@ const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_FAILED_LOGINS = 10;
 const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const CONSTRUCTOR_ID_PATTERN = /^[a-z0-9_]{1,40}$/;
 
 async function hashPassword(password) {
     const salt = crypto.randomBytes(16);
@@ -68,7 +69,18 @@ function openDatabase(dbPath) {
             expires_at INTEGER NOT NULL
         );
     `);
+
+    // Databases created before favourite teams existed need the column added.
+    const columns = db.prepare('PRAGMA table_info(users)').all().map(column => column.name);
+    if (!columns.includes('favorite_team')) {
+        db.exec('ALTER TABLE users ADD COLUMN favorite_team TEXT');
+    }
+
     return db;
+}
+
+function toPublicUser(row) {
+    return { id: row.id, username: row.username, favoriteTeam: row.favorite_team ?? null };
 }
 
 function createAuth({ dbPath, secureCookies = false }) {
@@ -125,12 +137,12 @@ function createAuth({ dbPath, secureCookies = false }) {
         if (!token) return null;
 
         const user = db.prepare(`
-            SELECT users.id, users.username
+            SELECT users.id, users.username, users.favorite_team
             FROM sessions JOIN users ON users.id = sessions.user_id
             WHERE sessions.token_hash = ? AND sessions.expires_at > ?
         `).get(hashToken(token), Date.now());
 
-        return user ? { id: user.id, username: user.username } : null;
+        return user ? toPublicUser(user) : null;
     }
 
     function readCredentials(req) {
@@ -169,7 +181,7 @@ function createAuth({ dbPath, secureCookies = false }) {
         }
 
         startSession(res, userId);
-        res.status(201).json({ user: { id: userId, username } });
+        res.status(201).json({ user: { id: userId, username, favoriteTeam: null } });
     });
 
     router.post('/login', async (req, res) => {
@@ -178,7 +190,7 @@ function createAuth({ dbPath, secureCookies = false }) {
         }
 
         const { username, password } = readCredentials(req);
-        const user = db.prepare('SELECT id, username, password_hash FROM users WHERE username = ?').get(username);
+        const user = db.prepare('SELECT id, username, password_hash, favorite_team FROM users WHERE username = ?').get(username);
 
         const passwordOk = password.length <= MAX_PASSWORD_LENGTH
             && await verifyPassword(password, user ? user.password_hash : await dummyHash);
@@ -189,7 +201,7 @@ function createAuth({ dbPath, secureCookies = false }) {
         }
 
         startSession(res, user.id);
-        res.json({ user: { id: user.id, username: user.username } });
+        res.json({ user: toPublicUser(user) });
     });
 
     router.post('/logout', (req, res) => {
@@ -205,6 +217,22 @@ function createAuth({ dbPath, secureCookies = false }) {
 
     router.get('/me', (req, res) => {
         res.json({ user: getSessionUser(req) });
+    });
+
+    // Body: { constructorId: "ferrari" } to set, or { constructorId: null } to clear.
+    router.post('/favorite-team', (req, res) => {
+        const user = getSessionUser(req);
+        if (!user) {
+            return res.status(401).json({ error: 'Log in to pick a favourite team.' });
+        }
+
+        const { constructorId } = req.body || {};
+        if (constructorId !== null && !(typeof constructorId === 'string' && CONSTRUCTOR_ID_PATTERN.test(constructorId))) {
+            return res.status(400).json({ error: 'Invalid team.' });
+        }
+
+        db.prepare('UPDATE users SET favorite_team = ? WHERE id = ?').run(constructorId, user.id);
+        res.json({ user: { ...user, favoriteTeam: constructorId } });
     });
 
     return { router, getSessionUser };

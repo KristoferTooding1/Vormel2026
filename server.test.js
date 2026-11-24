@@ -195,3 +195,61 @@ test('race endpoints use the injected client and reject invalid rounds', async (
   }
   assert.strictEqual(requested.length, 1);
 });
+
+test('favourite team can be set, read back, cleared, and needs a session', async (t) => {
+  const request = await startServer(t);
+
+  const anonymous = await request('POST', '/favorite-team', { body: { constructorId: 'ferrari' } });
+  assert.strictEqual(anonymous.status, 401);
+
+  const registered = await request('POST', '/register', { body: { username: 'tifosi', password: 'supersecret1' } });
+  assert.strictEqual(registered.data.user.favoriteTeam, null);
+  const { cookie } = registered;
+
+  const set = await request('POST', '/favorite-team', { body: { constructorId: 'ferrari' }, cookie });
+  assert.strictEqual(set.status, 200);
+  assert.strictEqual(set.data.user.favoriteTeam, 'ferrari');
+
+  const me = await request('GET', '/me', { cookie });
+  assert.strictEqual(me.data.user.favoriteTeam, 'ferrari');
+
+  const login = await request('POST', '/login', { body: { username: 'tifosi', password: 'supersecret1' } });
+  assert.strictEqual(login.data.user.favoriteTeam, 'ferrari');
+
+  for (const bad of ['Ferrari', '', 'x'.repeat(41), 42, '../etc', undefined]) {
+    const res = await request('POST', '/favorite-team', { body: { constructorId: bad }, cookie });
+    assert.strictEqual(res.status, 400, `constructorId ${JSON.stringify(bad)}`);
+  }
+
+  const cleared = await request('POST', '/favorite-team', { body: { constructorId: null }, cookie });
+  assert.strictEqual(cleared.data.user.favoriteTeam, null);
+  assert.strictEqual((await request('GET', '/me', { cookie })).data.user.favoriteTeam, null);
+});
+
+test('existing databases without the favourite team column are upgraded', async (t) => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { DatabaseSync } = require('node:sqlite');
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vormel-'));
+  const dbPath = path.join(dir, 'old.db');
+  const old = new DatabaseSync(dbPath);
+  old.exec(`CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`);
+  old.close();
+
+  createApp({ dbPath, jolpica: async () => ({}) });
+  const upgraded = new DatabaseSync(dbPath);
+  const columns = upgraded.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  upgraded.close();
+  assert.ok(columns.includes('favorite_team'));
+  t.after(() => {
+    // Windows can't delete the file while the app still holds the database open.
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+  });
+});

@@ -127,6 +127,41 @@
      border-radius: 3px;
    }
 
+   .standings-row.with-fav {
+     grid-template-columns: 32px 1fr 70px 50px 28px;
+   }
+
+   /* Rows of the user's favourite team: tinted with the team colour. */
+   .standings-row.favorite,
+   .results-row.favorite {
+     background: color-mix(in srgb, var(--team-color) 16%, var(--bg));
+     border-color: color-mix(in srgb, var(--team-color) 45%, var(--border));
+   }
+
+   .fav-btn {
+     background: none;
+     border: none;
+     padding: 0;
+     font-size: 18px;
+     line-height: 1;
+     color: var(--text);
+     cursor: pointer;
+   }
+
+   .fav-btn:hover,
+   .fav-btn:focus-visible {
+     color: var(--text-h);
+   }
+
+   .fav-btn.active {
+     color: #FFD700;
+   }
+
+   .fav-hint {
+     margin-top: 10px;
+     font-size: 13px;
+   }
+
    .standings-pos {
      font-family: var(--mono);
      font-size: 14px;
