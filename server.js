@@ -13,9 +13,15 @@ const CORS_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://l
     .map(origin => origin.trim())
     .filter(Boolean);
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
+const CACHE_TTL_MS = Number(process.env.CACHE_TTL_SECONDS || 300) * 1000;
+const CACHE_MAX_ENTRIES = 200;
+const USER_AGENT = 'Vormel2026 (+https://github.com/KristoferTooding1/Vormel2026)';
 
-async function fetchJolpica(endpoint) {
-    const response = await fetch(`${JOLPICA_BASE}${endpoint}`);
+async function fetchJolpica(endpoint, { baseUrl = JOLPICA_BASE, fetchImpl = fetch } = {}) {
+    // Jolpica rejects Node's default user agent; identify the app as their API policy asks.
+    const response = await fetchImpl(`${baseUrl}${endpoint}`, {
+        headers: { 'User-Agent': USER_AGENT },
+    });
 
     if (!response.ok) {
         const text = await response.text();
@@ -25,9 +31,70 @@ async function fetchJolpica(endpoint) {
     return response.json();
 }
 
-function createApp({ dbPath = DB_PATH } = {}) {
+// Wraps fetchJolpica with an in-memory TTL cache. Concurrent requests for the same
+// endpoint share one upstream call, and if Jolpica fails after an entry has expired
+// the stale copy is served rather than an error.
+function createJolpicaClient({
+    baseUrl = JOLPICA_BASE,
+    fetchImpl = fetch,
+    ttlMs = CACHE_TTL_MS,
+    maxEntries = CACHE_MAX_ENTRIES,
+    now = Date.now,
+} = {}) {
+    const cache = new Map();
+    const inFlight = new Map();
+
+    function store(endpoint, data) {
+        cache.delete(endpoint);
+        cache.set(endpoint, { data, expiresAt: now() + ttlMs });
+
+        // Map keeps insertion order, so the first key is the least recently stored.
+        if (cache.size > maxEntries) {
+            cache.delete(cache.keys().next().value);
+        }
+    }
+
+    return function fetchCached(endpoint) {
+        const entry = cache.get(endpoint);
+
+        if (entry && entry.expiresAt > now()) {
+            return Promise.resolve(entry.data);
+        }
+
+        if (inFlight.has(endpoint)) {
+            return inFlight.get(endpoint);
+        }
+
+        const request = fetchJolpica(endpoint, { baseUrl, fetchImpl })
+            .then(data => {
+                store(endpoint, data);
+                return data;
+            })
+            .catch(error => {
+                if (entry) {
+                    console.warn(`Serving stale cache for ${endpoint}:`, error.message);
+                    return entry.data;
+                }
+                throw error;
+            })
+            .finally(() => inFlight.delete(endpoint));
+
+        inFlight.set(endpoint, request);
+        return request;
+    };
+}
+
+function createApp({ dbPath = DB_PATH, jolpica = createJolpicaClient() } = {}) {
     const app = express();
     const auth = createAuth({ dbPath, secureCookies: COOKIE_SECURE });
+
+    // Round numbers go straight into the upstream URL (and the cache key), so only accept 1-99.
+    app.param('round', (req, res, next, round) => {
+        if (!/^[1-9]\d?$/.test(round)) {
+            return res.status(400).json({ error: 'Round must be a number between 1 and 99.' });
+        }
+        next();
+    });
 
     // Credentialed requests (the session cookie) require explicit origins, not "*".
     app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
@@ -40,7 +107,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
 
     app.get('/api/schedule', async (req, res) => {
         try {
-            const data = await fetchJolpica('/2026.json');
+            const data = await jolpica('/2026.json');
             res.json(data.MRData.RaceTable.Races);
         } catch (error) {
             console.error('Schedule fetch failed:', error);
@@ -50,7 +117,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
 
     app.get('/api/next-race', async (req, res) => {
         try {
-            const data = await fetchJolpica('/2026.json');
+            const data = await jolpica('/2026.json');
             const races = data.MRData.RaceTable.Races;
             const now = new Date();
             const nextRace = races.find(race => new Date(`${race.date}T${race.time || '00:00:00Z'}`) >= now);
@@ -70,7 +137,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
         const { round } = req.params;
 
         try {
-            const data = await fetchJolpica(`/2026/${round}/results.json`);
+            const data = await jolpica(`/2026/${round}/results.json`);
             const race = data.MRData.RaceTable.Races[0];
 
             if (!race) {
@@ -88,7 +155,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
         const { round } = req.params;
 
         try {
-            const data = await fetchJolpica(`/2026/${round}/qualifying.json`);
+            const data = await jolpica(`/2026/${round}/qualifying.json`);
             const race = data.MRData.RaceTable.Races[0];
 
             if (!race) {
@@ -106,7 +173,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
         const { round } = req.params;
 
         try {
-            const data = await fetchJolpica(`/2026/${round}/sprint.json`);
+            const data = await jolpica(`/2026/${round}/sprint.json`);
             const race = data.MRData.RaceTable.Races[0];
 
             if (!race) {
@@ -122,7 +189,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
 
     app.get('/api/driver-standings', async (req, res) => {
         try {
-            const data = await fetchJolpica('/2026/driverStandings.json');
+            const data = await jolpica('/2026/driverStandings.json');
             const standings = data.MRData.StandingsTable.StandingsLists[0];
 
             if (!standings) {
@@ -138,7 +205,7 @@ function createApp({ dbPath = DB_PATH } = {}) {
 
     app.get('/api/constructor-standings', async (req, res) => {
         try {
-            const data = await fetchJolpica('/2026/constructorStandings.json');
+            const data = await jolpica('/2026/constructorStandings.json');
             const standings = data.MRData.StandingsTable.StandingsLists[0];
 
             if (!standings) {
@@ -172,4 +239,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createApp, fetchJolpica };
+module.exports = { createApp, createJolpicaClient, fetchJolpica };

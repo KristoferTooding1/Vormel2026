@@ -88,7 +88,7 @@ Copy `.env.example` to `.env` to override the defaults.
 ## Known limitations
 
 - Practice session and sprint qualifying results aren't available — Jolpica (like its Ergast predecessor) only tracks classifications for race, qualifying, and sprint sessions.
-- No caching layer yet — each request re-fetches from Jolpica live. Fine for personal-project traffic; a production version would cache responses for a few minutes to reduce redundant calls.
+- Jolpica responses are cached in memory for 5 minutes (`CACHE_TTL_SECONDS`), so results can lag the official timing by that much. The cache is per process and resets on restart.
 
 ## Data source
 

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { createApp } = require('./server');
+const { createApp, createJolpicaClient } = require('./server');
 
 test('createApp returns an Express app instance', () => {
   const app = createApp({ dbPath: ':memory:' });
@@ -108,4 +108,90 @@ test('login rejects wrong credentials and locks out after repeated failures', as
 
   const lockedOut = await request('POST', '/login', { body: { username: 'charles', password: 'supersecret1' } });
   assert.strictEqual(lockedOut.status, 429);
+});
+
+function fakeUpstream() {
+  const calls = [];
+  let failNext = false;
+
+  async function fetchImpl(url) {
+    calls.push(url);
+    if (failNext) {
+      return { ok: false, status: 503, text: async () => 'down' };
+    }
+    return { ok: true, json: async () => ({ url, n: calls.length }) };
+  }
+
+  return { calls, fetchImpl, fail: () => { failNext = true; } };
+}
+
+test('jolpica client caches responses until the TTL expires', async () => {
+  const upstream = fakeUpstream();
+  let clock = 0;
+  const jolpica = createJolpicaClient({ baseUrl: 'http://x', fetchImpl: upstream.fetchImpl, ttlMs: 1000, now: () => clock });
+
+  const first = await jolpica('/2026.json');
+  const second = await jolpica('/2026.json');
+  assert.strictEqual(upstream.calls.length, 1);
+  assert.deepStrictEqual(second, first);
+
+  clock = 1001;
+  const refreshed = await jolpica('/2026.json');
+  assert.strictEqual(upstream.calls.length, 2);
+  assert.strictEqual(refreshed.n, 2);
+});
+
+test('jolpica client shares one upstream call between concurrent requests', async () => {
+  const upstream = fakeUpstream();
+  const jolpica = createJolpicaClient({ baseUrl: 'http://x', fetchImpl: upstream.fetchImpl });
+
+  await Promise.all([jolpica('/a.json'), jolpica('/a.json'), jolpica('/a.json')]);
+  assert.strictEqual(upstream.calls.length, 1);
+});
+
+test('jolpica client serves stale data when upstream fails, and errors with no cache', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  const upstream = fakeUpstream();
+  let clock = 0;
+  const jolpica = createJolpicaClient({ baseUrl: 'http://x', fetchImpl: upstream.fetchImpl, ttlMs: 1000, now: () => clock });
+
+  const cached = await jolpica('/2026.json');
+  clock = 5000;
+  upstream.fail();
+
+  assert.deepStrictEqual(await jolpica('/2026.json'), cached);
+  await assert.rejects(jolpica('/other.json'), /503/);
+});
+
+test('jolpica client evicts the oldest entry beyond maxEntries', async () => {
+  const upstream = fakeUpstream();
+  const jolpica = createJolpicaClient({ baseUrl: 'http://x', fetchImpl: upstream.fetchImpl, maxEntries: 2 });
+
+  await jolpica('/1.json');
+  await jolpica('/2.json');
+  await jolpica('/3.json');
+  await jolpica('/1.json');
+  assert.strictEqual(upstream.calls.length, 4);
+});
+
+test('race endpoints use the injected client and reject invalid rounds', async (t) => {
+  const requested = [];
+  const jolpica = async (endpoint) => {
+    requested.push(endpoint);
+    return { MRData: { RaceTable: { Races: [{ round: '3' }] } } };
+  };
+  const server = createApp({ dbPath: ':memory:', jolpica }).listen(0);
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => server.close());
+  const base = `http://localhost:${server.address().port}/api`;
+
+  const ok = await fetch(`${base}/results/3`);
+  assert.strictEqual(ok.status, 200);
+  assert.deepStrictEqual(requested, ['/2026/3/results.json']);
+
+  for (const bad of ['0', 'abc', '100', '..%2F..%2Fdrivers']) {
+    const res = await fetch(`${base}/results/${bad}`);
+    assert.strictEqual(res.status, 400, `round ${bad}`);
+  }
+  assert.strictEqual(requested.length, 1);
 });
